@@ -26,7 +26,7 @@ function injectCrossHomeAlertUI() {
     bar.innerHTML = `
         <div style="display:flex; align-items:center; justify-content:center; gap:15px;">
             <span id="crossHomeAlertText">⚠️ Cảnh báo: Thiết bị tại nhà khác đang gặp sự cố!</span>
-            <button onclick="window.location.href='select-home.html'" style="background:white; color:#e67e22; border:none; padding:5px 15px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">Vào kiểm tra ngay</button>
+            <button id="crossHomeAlertBtn" style="background:white; color:#e67e22; border:none; padding:5px 15px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">Vào kiểm tra ngay</button>
             <span onclick="this.parentElement.parentElement.style.display='none'" style="cursor:pointer; font-size:20px; margin-left:10px;">&times;</span>
         </div>
         <style>
@@ -36,13 +36,46 @@ function injectCrossHomeAlertUI() {
     document.body.prepend(bar);
 }
 
-function showCrossHomeAlert(homeName) {
+function showCrossHomeAlert(homeId, homeName) {
     const bar = document.getElementById("crossHomeAlertBar");
     const text = document.getElementById("crossHomeAlertText");
-    if (bar && text) {
+    const btn = document.getElementById("crossHomeAlertBtn");
+    
+    if (bar && text && btn) {
         text.innerText = `⚠️ Cảnh báo: Ngôi nhà "${homeName}" đang có thiết bị gặp sự cố nghiêm trọng!`;
+        btn.onclick = () => quickEnterHome(homeId, homeName);
         bar.style.display = "block";
-        bar.style.background = "#d32f2f"; // Màu đỏ đậm cho sự cố nghiêm trọng
+        bar.style.background = "#d32f2f"; 
+    }
+}
+
+async function quickEnterHome(homeId, homeName) {
+    const password = prompt(`Vui lòng nhập mật khẩu để vào nhanh nhà "${homeName}":`);
+    if (!password) return;
+
+    try {
+        const homeSnap = await getDoc(doc(db, "homes", homeId));
+        if (!homeSnap.exists()) return alert("Nhà không tồn tại!");
+        
+        const homeData = homeSnap.data();
+        if (String(homeData.homePassword) === String(password)) {
+            localStorage.setItem("activeHomeId", homeId);
+            localStorage.setItem("activeHomeName", homeName);
+            // Cập nhật joinedHomeIds nếu cần
+            if (auth.currentUser) {
+                const { arrayUnion } = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js");
+                await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                    joinedHomeIds: arrayUnion(homeId)
+                }).catch(() => {});
+            }
+            alert(`Đang vào nhà "${homeName}"...`);
+            location.href = "dashboard.html";
+        } else {
+            alert("Sai mật khẩu nhà!");
+        }
+    } catch (e) {
+        console.error("Lỗi vào nhà nhanh:", e);
+        alert("Lỗi: " + e.message);
     }
 }
 
@@ -500,7 +533,7 @@ async function startNotificationBadgeListener() {
             if (activeHomeId && notiData.homeId && notiData.homeId !== activeHomeId) {
                  const isSerious = notiData.category === "danger" || notiData.category === "maintenance_request";
                  if (isSerious) {
-                     showCrossHomeAlert(notiData.homeName || "khác");
+                     showCrossHomeAlert(notiData.homeId, notiData.homeName || "khác");
                  }
                  // Không return nữa để dấu đỏ (Badge) vẫn được hiển thị bên dưới
             }
