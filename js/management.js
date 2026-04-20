@@ -24,7 +24,7 @@ onAuthStateChanged(auth, async (user) => {
             localStorage.setItem("userRole", userRole);
             
             // Cài đặt Navbar dựa trên Role
-            setupNavbar(userRole);
+            renderNavbar(userRole);
 
             // Xử lý Nhà (Home)
             let homeId = localStorage.getItem("activeHomeId") || userData.ownedHomeId;
@@ -55,21 +55,38 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- 2. XỬ LÝ NAVBAR ---
-function setupNavbar(role) {
-    const roleLink = document.getElementById("nav-role-action"); 
+// --- 2. XỬ LÝ NAVBAR ĐỒNG BỘ ---
+function renderNavbar(role) {
+    const roleLink = document.getElementById("nav-role-action");
     if (!roleLink) return;
 
     if (role === "admin") {
         roleLink.href = "maintenance.html";
         roleLink.innerText = "Bảo trì & Sửa chữa";
     } else {
-        roleLink.href = "profile.html";     
+        roleLink.href = "profile.html";
         roleLink.innerText = "Hồ sơ cá nhân";
     }
+
+    // Highlighting active page (Blue color + Underline)
+    const path = window.location.pathname;
     
-    document.getElementById("nav-devices")?.classList.add("active");
+    // Clear old active classes
+    const allLinks = document.querySelectorAll('.menu a');
+    allLinks.forEach(link => link.classList.remove('active'));
+
+    if (path.includes("dashboard.html")) document.getElementById("nav-home")?.classList.add("active");
+    if (path.includes("management.html")) document.getElementById("nav-devices")?.classList.add("active");
+    if (path.includes("notifications.html")) document.getElementById("nav-notifications")?.classList.add("active");
+    if (path.includes("profile.html") || path.includes("maintenance.html")) {
+        roleLink.classList.add("active");
+    }
 }
+
+// Chạy ngay khi trang load (Sử dụng cache để không bị giật)
+const cachedRole = localStorage.getItem("userRole") || "user";
+renderNavbar(cachedRole);
+
 
 // --- 3. HÀM VẼ BẢNG THIẾT BỊ ---
 // --- 3. HÀM VẼ BẢNG THIẾT BỊ (BẢN REAL-TIME CHUẨN) ---

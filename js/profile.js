@@ -70,11 +70,17 @@ function renderNavbar(role) {
 
     // Highlighting active page
     const path = window.location.pathname;
-    const navNoti = document.getElementById("nav-notifications");
     
+    // Clear old active classes
+    const allLinks = document.querySelectorAll('.menu a');
+    allLinks.forEach(link => link.classList.remove('active'));
+
     if (path.includes("dashboard.html")) document.getElementById("nav-home")?.classList.add("active");
-    if (path.includes("notifications.html")) navNoti?.classList.add("active");
-    if (path.includes("profile.html") || path.includes("maintenance.html")) roleLink.classList.add("active");
+    if (path.includes("management.html")) document.getElementById("nav-devices")?.classList.add("active");
+    if (path.includes("notifications.html")) document.getElementById("nav-notifications")?.classList.add("active");
+    if (path.includes("profile.html") || path.includes("maintenance.html")) {
+        roleLink.classList.add("active");
+    }
 }
 
 // 1.5. Hàm cập nhật Badge Thông báo (+N)

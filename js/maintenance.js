@@ -42,7 +42,24 @@ function renderNavbar(role) {
         roleLink.href = "profile.html";
         roleLink.innerText = "Hồ sơ cá nhân";
     }
+
+    // Highlighting active page
+    const path = window.location.pathname;
+    const allLinks = document.querySelectorAll('.menu a');
+    allLinks.forEach(link => link.classList.remove('active'));
+
+    if (path.includes("dashboard.html")) document.getElementById("nav-home")?.classList.add("active");
+    if (path.includes("management.html")) document.getElementById("nav-devices")?.classList.add("active");
+    if (path.includes("notifications.html")) document.getElementById("nav-notifications")?.classList.add("active");
+    if (path.includes("profile.html") || path.includes("maintenance.html")) {
+        roleLink.classList.add("active");
+    }
 }
+
+// Chạy ngay khi trang load (Sử dụng cache)
+const cachedRole = localStorage.getItem("userRole") || "user";
+renderNavbar(cachedRole);
+
 
 // --- 2. THEO DÕI AUTH & ĐỒNG BỘ DỮ LIỆU ---
 onAuthStateChanged(auth, async (user) => {

@@ -1,0 +1,86 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f5f7fa;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 40px;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.navbar h2 {
+    font-size: 40px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.navbar a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #333;
+}
+
+.navbar .active {
+    color: blue;
+}
+
+
+.logo img {
+    width: 300px;
+    height: 300px;
+    object-fit: cover;
+    margin: 20px 0;
+    border-radius: 50%;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+}
+
+/* Hero */
+.hero {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.hero h1 {
+    font-size: 45px;
+    margin-bottom: 60px;
+}
+
+
+.buttons {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    /* xếp dọc */
+    align-items: center;
+    /* căn giữa */
+}
+
+.btn {
+    padding: 16px 30px;
+    /* tăng kích thước nút */
+    border-radius: 30px;
+    /* bo tròn hơn */
+    border: 1px solid #ccc;
+    text-decoration: none;
+    margin: 12px;
+    width: 280px;
+    /* tăng chiều rộng */
+    text-align: center;
+    font-size: 18px;
+    /* chữ to hơn */
+    font-weight: 500;
+}
+
+.primary {
+    background: blue;
+    color: white;
+}
