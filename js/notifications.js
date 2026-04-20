@@ -42,7 +42,7 @@ window.logNotification = async (homeId, action, details, category = "management"
         const message = `Tài khoản (${roleName}) ${email} đã ${action}: ${details}`;
         
         let title = "Quản lý hệ thống";
-        if (category === "danger") title = "Cảnh báo khẩn cấp";
+        if (category === "danger") title = `Phát hiện ra bất thường trong "${homeName}"`;
         if (category === "maintenance_request") title = "Yêu cầu sửa chữa";
         if (category === "maintenance_complete") title = "Đã hoàn tất bảo trì";
 
