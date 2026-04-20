@@ -148,31 +148,8 @@ async function renderManagementTab(homeId, userRole) {
 }
 
 // --- 4. CÁC HÀM TƯƠNG TÁC (WINDOW) ---
-window.reportDeviceIssue = async (deviceId, deviceName) => {
-    const homeId = localStorage.getItem("activeHomeId");
-    const homeName = localStorage.getItem("activeHomeName") || "Nhà";
-    
-    if (!confirm(`Báo hỏng thiết bị: ${deviceName}?`)) return;
+// window.reportDeviceIssue được lấy từ deviceManager.js để đồng bộ logic thông báo toàn hệ thống.
 
-    try {
-        await updateDoc(doc(db, "homes", homeId, "devices", deviceId), { status_health: 'repair' });
-        await addDoc(collection(db, "notifications"), {
-            title: "Yêu cầu bảo trì",
-            message: `Thiết bị ${deviceName} tại ${homeName} gặp sự cố.`,
-            homeId: homeId,    // THÊM DÒNG NÀY
-            homeName: homeName, // THÊM DÒNG NÀY
-            deviceId: deviceId, // THÊM DÒNG NÀY
-            category: "maintenance_request", // Để
-            timestamp: serverTimestamp()
-        });
-        await addDoc(collection(db, "homes", homeId, "devices", deviceId, "history"), {
-            action: "Đã báo hỏng",
-            timestamp: serverTimestamp()
-        });
-        alert("Đã gửi yêu cầu!");
-        location.reload(); 
-    } catch (e) { console.error(e); }
-};
 
 window.showDeviceHistory = async (deviceId, deviceName) => {
     const homeId = localStorage.getItem("activeHomeId");

@@ -1,5 +1,5 @@
-import { db } from "./firebase-config.js";
-import { doc, updateDoc, getDoc, deleteDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+import { db, auth } from "./firebase-config.js";
+import { doc, updateDoc, getDoc, deleteDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 import { CONFIG } from "./config.js";
 
 // ==========================================
@@ -43,11 +43,9 @@ window.toggleDeviceStatus = async (deviceId, currentStatus, deviceName) => {
 // ==========================================
 window.reportDeviceIssue = async (deviceId, deviceName) => {
     const homeId = localStorage.getItem("activeHomeId");
-    if (!homeId) return;
+    if (!homeId) return alert("Vui lòng chọn nhà trước!");
 
     if (!confirm(`Xác nhận gửi báo cáo sự cố cho thiết bị: ${deviceName}?`)) return;
-
-    const senderName = localStorage.getItem("cachedUsername") || auth.currentUser?.email || "Người dùng";
 
     try {
         const deviceRef = doc(db, "homes", homeId, "devices", deviceId);
@@ -57,14 +55,21 @@ window.reportDeviceIssue = async (deviceId, deviceName) => {
         if (devSnap.exists()) {
             const currentHealth = devSnap.data().status_health;
             // Chỉ cho phép báo hỏng khi trạng thái là 'issue_detected'
-            if (currentHealth !== "issue_detected") {
-                alert("Thiết bị này đang hoạt động bình thường hoặc đã được xử lý (đang sửa/đã sửa).");
-                return;
+            if (currentHealth !== "issue_detected" && currentHealth !== "good") {
+                // Cho phép báo hỏng kể cả khi status là 'good' nếu người dùng thấy lỗi thật
+                // Nhưng ở đây logic đang lọc 'issue_detected' từ simulation.
+                // Để linh hoạt, ta cho phép báo hỏng nếu chưa ở trạng thái 'repair'
+                if (currentHealth === "repair") {
+                    alert("Thiết bị này đã được báo hỏng và đang chờ xử lý.");
+                    return;
+                }
             }
         }
 
+        // Cập nhật trạng thái sang 'repair'
         await updateDoc(deviceRef, { status_health: "repair" });
 
+        // Gửi thông báo chính thức qua logNotification
         if (window.logNotification) {
             await window.logNotification(
                 homeId, 
@@ -74,18 +79,18 @@ window.reportDeviceIssue = async (deviceId, deviceName) => {
             );
         }
 
-        console.log(`[DeviceManager] Đã gửi báo cáo thành công cho thiết bị ${deviceName}`);
-
-        // THÊM: Ghi lịch sử thiết bị
+        // Ghi lịch sử thiết bị
         const historyRef = collection(db, "homes", homeId, "devices", deviceId, "history");
         await addDoc(historyRef, {
-            action: `Người dùng đã yêu cầu bảo trì tới Admin`,
+            action: `Người dùng (${auth.currentUser?.email || "N/A"}) đã yêu cầu bảo trì tới Admin`,
             timestamp: serverTimestamp()
         });
 
         alert("Đã gửi yêu cầu sửa chữa tới hệ thống!");
+        console.log(`[DeviceManager] Đã gửi báo cáo thành công cho thiết bị ${deviceName}`);
     } catch (e) {
         console.error("Lỗi báo hỏng:", e);
+        alert("Lỗi khi gửi báo hỏng: " + e.message);
     }
 };
 
