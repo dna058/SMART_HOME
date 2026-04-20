@@ -1,5 +1,5 @@
 import { db, auth } from "./firebase-config.js";
-import { doc, updateDoc, getDoc, deleteDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+import { doc, updateDoc, getDoc, deleteDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, where } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 import { CONFIG } from "./config.js";
 
 // ==========================================
@@ -26,6 +26,18 @@ window.toggleDeviceStatus = async (deviceId, currentStatus, deviceName) => {
             time: new Date().toLocaleString('vi-VN'),
             timestamp: serverTimestamp()
         });
+
+        // Gửi thông báo tới hệ thống (Để hiện chấm đỏ cho người khác)
+        if (window.logNotification) {
+            const displayAction = newStatus === "on" || newStatus === "open" ? "BẬT" : "TẮT";
+            await window.logNotification(
+                homeId, 
+                `điều khiển (${displayAction})`, 
+                deviceName, 
+                "device_toggle",
+                { deviceId: deviceId }
+            );
+        }
 
         await fetch(`${CONFIG.BASE_URL}/api/${room}/${deviceId}`, { 
             method: 'POST',
@@ -55,14 +67,9 @@ window.reportDeviceIssue = async (deviceId, deviceName) => {
         if (devSnap.exists()) {
             const currentHealth = devSnap.data().status_health;
             // Chỉ cho phép báo hỏng khi trạng thái là 'issue_detected'
-            if (currentHealth !== "issue_detected" && currentHealth !== "good") {
-                // Cho phép báo hỏng kể cả khi status là 'good' nếu người dùng thấy lỗi thật
-                // Nhưng ở đây logic đang lọc 'issue_detected' từ simulation.
-                // Để linh hoạt, ta cho phép báo hỏng nếu chưa ở trạng thái 'repair'
-                if (currentHealth === "repair") {
-                    alert("Thiết bị này đã được báo hỏng và đang chờ xử lý.");
-                    return;
-                }
+            if (currentHealth === "repair" || currentHealth === "under_repair") {
+                alert("Thiết bị này đã được báo hỏng hoặc đang trong quá trình sửa chữa.");
+                return;
             }
         }
 
@@ -75,7 +82,8 @@ window.reportDeviceIssue = async (deviceId, deviceName) => {
                 homeId, 
                 "báo hỏng thiết bị", 
                 `${deviceName}`, 
-                "maintenance_request"
+                "maintenance_request",
+                { deviceId, deviceName }
             );
         }
 
@@ -180,15 +188,41 @@ window.completeMaintenance = async (deviceId, deviceName) => {
                 homeId, 
                 "hoàn tất sửa chữa", 
                 `${deviceName}`, 
-                "maintenance_complete"
+                "maintenance_complete",
+                { deviceId, deviceName }
             );
         }
 
-        alert(`Đã xử lý xong và thông báo tới người dùng!`);
+        alert(`✅ Đã hoàn tất sửa chữa và đưa thiết bị "${deviceName}" vào hoạt động!`);
 
-        alert(`Đã xử lý xong và thông báo tới người dùng!`);
+        // 4. ĐỒNG BỘ THÔNG BÁO CŨ: Đánh dấu các tin liên quan là 'Đã sửa chữa'
+        try {
+            // A. Cập nhật trong Collection của nhà (Dành cho User)
+            const notiQuery = query(
+                collection(db, "homes", homeId, "notifications"), 
+                where("deviceId", "==", deviceId)
+            );
+            const notiSnaps = await getDocs(notiQuery);
+            const updatePromises = notiSnaps.docs.map(d => updateDoc(d.ref, { isFixed: true }));
+            
+            // B. Cập nhật trong Collection Global (Dành cho Admin)
+            const globalQuery = query(
+                collection(db, "notifications"),
+                where("deviceId", "==", deviceId),
+                where("homeId", "==", homeId)
+            );
+            const globalSnaps = await getDocs(globalQuery);
+            const globalUpdatePromises = globalSnaps.docs.map(d => updateDoc(d.ref, { isFixed: true }));
+
+            await Promise.all([...updatePromises, ...globalUpdatePromises]);
+            console.log(`[Maintenance] Đã đồng bộ ${updatePromises.length + globalUpdatePromises.length} thông báo cũ (Nhà & Hệ thống).`);
+        } catch (errSync) { console.warn("Lỗi đồng bộ thông báo cũ:", errSync); }
+
+        if (window.location.pathname.includes("maintenance.html")) {
+            setTimeout(() => location.reload(), 1500);
+        }
     } catch (e) {
-        console.error("Lỗi bảo trì:", e);
+        console.error("Lỗi hoàn tất bảo trì:", e);
         alert("Lỗi: " + e.message);
     }
 };

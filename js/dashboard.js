@@ -7,28 +7,73 @@ import {
 
 
 // --- LOGIC GIẢ LẬP SỰ CỐ NGẪU NHIÊN ---
-async function simulateRandomFailure(homeId) {
-    if (!homeId) return;
-    // CHỈ chạy giả lập nếu người đang đăng nhập mang quyền 'user'
-    if (currentUserRole !== "user") return;
+async function simulateRandomFailure(forced = false) {
+    const user = auth.currentUser;
+    const role = localStorage.getItem("userRole") || currentUserRole;
+    if (!user || role !== "user") {
+        console.warn("[Simulation] Bỏ qua: không phải user.", { user: user?.email, role });
+        return;
+    }
+
     try {
-        // Tỷ lệ xảy ra sự cố (50%)
-        if (Math.random() > 0.5) {
-            console.log("[Simulation] Kiểm tra hệ thống: Mọi thứ bình thường.");
+        // 1. Lấy danh sách tất cả các nhà của User
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        if (!userSnap.exists()) return;
+        const userData = userSnap.data();
+        let homeIds = [...(userData.joinedHomeIds || [])];
+        if (userData.ownedHomeId && !homeIds.includes(userData.ownedHomeId)) {
+            homeIds.push(userData.ownedHomeId);
+        }
+        if (homeIds.length === 0) return;
+
+        // 2. Lọc ra danh sách các nhà "Khỏe mạnh" (Không có thiết bị hỏng hóc đang chờ)
+        let healthyHomeIds = [];
+        if (!forced) {
+            for (const hId of homeIds) {
+                const devSnap = await getDocs(collection(db, "homes", hId, "devices"));
+                const hasPending = devSnap.docs.some(d => {
+                    const s = d.data().status_health;
+                    return s === 'issue_detected' || s === 'repair' || s === 'under_repair';
+                });
+                if (!hasPending) healthyHomeIds.push(hId);
+            }
+        } else {
+            // Khi forced = true (ví dụ đăng nhập phát báo luôn), bỏ qua bước check để tăng tốc
+            healthyHomeIds = homeIds;
+        }
+
+        if (healthyHomeIds.length === 0) {
+            console.log(`%c[Simulation] Tất cả các nhà đều đang có thiết bị hỏng chưa sửa. Tạm dừng giả lập mới.`, "color: #e67e22;");
             return;
         }
 
+        // 3. Chọn nhà: Ưu tiên nhà đang active nếu nó khỏe mạnh, nếu không chọn ngẫu nhiên
+        const activeHomeIdForSim = localStorage.getItem("activeHomeId");
+        let homeId = (activeHomeIdForSim && healthyHomeIds.includes(activeHomeIdForSim)) 
+            ? activeHomeIdForSim 
+            : healthyHomeIds[Math.floor(Math.random() * healthyHomeIds.length)];
+        
+        console.log(`[Simulation] Đang tiến hành tạo sự cố tại nhà: ${homeId}`);
+
+        // 4. Lấy tên nhà để gửi thông báo cho chuẩn
+        const homeSnap = await getDoc(doc(db, "homes", homeId));
+        if (!homeSnap.exists()) return;
+        const homeName = homeSnap.data().homeName || "ngôi nhà này";
+
+        // 5. Lấy danh sách thiết bị đang tốt
         const devicesRef = collection(db, "homes", homeId, "devices");
         const snap = await getDocs(devicesRef);
-        // Lọc các thiết bị đang ở trạng thái tốt (hoặc không có status_health)
         const healthyDevices = snap.docs.filter(docSnap => {
             const d = docSnap.data();
             return !d.status_health || d.status_health === 'good';
         });
 
-        if (healthyDevices.length === 0) return;
+        if (healthyDevices.length === 0) {
+            console.log(`[Simulation] Nhà "${homeName}" không có thiết bị nào sẵn sàng gặp sự cố.`);
+            return;
+        }
 
-        // Chọn ngẫu nhiên 1 thiết bị hỏng
+        // 6. Chọn ngẫu nhiên 1 thiết bị hỏng
         const randomDoc = healthyDevices[Math.floor(Math.random() * healthyDevices.length)];
         const deviceData = randomDoc.data();
 
@@ -37,29 +82,29 @@ async function simulateRandomFailure(homeId) {
             lastIssueAt: new Date().toISOString()
         });
 
-        // THÊM: Gửi thông báo tự động để người dùng biết thiết bị hỏng
+        // 7. Ghi thông báo tự động
         if (window.logNotification) {
             await window.logNotification(
-                homeId, 
-                "phát hiện sự cố", 
+                homeId,
+                "phát hiện sự cố",
                 `Thiết bị ${deviceData.deviceName} có dấu hiệu bất thường, cần kiểm tra gấp!`,
-                "danger"
+                "danger",
+                { deviceId: randomDoc.id, deviceName: deviceData.deviceName }
             );
         }
-        
-        // Ghi lịch sử riêng của thiết bị để User thấy cảnh báo
+
+        // Ghi lịch sử riêng của thiết bị
         await addDoc(collection(db, "homes", homeId, "devices", randomDoc.id, "history"), {
             action: `⚠️ Hệ thống phát hiện ${deviceData.deviceName} có dấu hiệu bất thường`,
             timestamp: serverTimestamp()
         });
 
-        console.log(`%c [SIMULATION] Thiết bị ${deviceData.deviceName} đã gặp sự cố ngẫu nhiên!`, "color: #e74c3c; font-weight: bold;");
+        console.log(`%c[SIMULATION] Nhà "${homeName}": Thiết bị ${deviceData.deviceName} đã gặp sự cố ngẫu nhiên!`, "color: #e74c3c; font-weight: bold;");
 
     } catch (e) {
         console.error("Lỗi trong quá trình giả lập:", e);
     }
 }
-
 
 // 0. Hiển thị lời chào từ bộ nhớ đệm ngay lập tức (Trước khi Auth load)
 const emailElTop = document.getElementById("userEmail");
@@ -95,50 +140,7 @@ function renderNavbar(role) {
     if (path.includes("profile.html") || path.includes("maintenance.html")) roleLink.classList.add("active");
 }
 
-// 1.5. Hàm cập nhật Badge Thông báo (+N)
-function updateNotificationBadge(homeId, role) {
-    const lastView = localStorage.getItem("lastViewedNotifications") || "";
-    const navNoti = document.getElementById("nav-notifications");
-    if (!navNoti) return;
 
-    const q = query(
-        collection(db, "homes", homeId, "notifications"),
-        orderBy("timestamp", "desc"),
-        limit(50)
-    );
-
-    onSnapshot(q, (snapshot) => {
-        let count = 0;
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            const actionByAdmin = data.role && data.role.toLowerCase() === 'admin';
-
-            // Quy tắc đếm badge cho Admin:
-            // - Thông báo từ Admin: luôn đếm
-            // - Thông báo từ User có category "management" (thêm/sửa/xóa): đếm
-            // - Thông báo từ User có category "device_toggle" (bật/tắt): BỎ QUA
-            if (role === 'admin') {
-                if (data.category === 'device_toggle') return;
-            }
-
-            if (data.timestamp > lastView) {
-                count++;
-            }
-        });
-
-        // Chỉ đếm thông báo nếu không ở trang thông báo (Dành cho badge nhỏ)
-        // Hoặc cho phép hiện (+N) ở mọi trang theo yêu cầu MỚI
-        if (count > 0) {
-            navNoti.innerText = `Thông báo (+${count})`;
-            navNoti.style.color = "#ff4d4d";
-            navNoti.style.fontWeight = "bold";
-        } else {
-            navNoti.innerText = "Thông báo";
-            navNoti.style.color = "";
-            navNoti.style.fontWeight = "";
-        }
-    });
-}
 
 let homeDocUnsubscribe = null;
 let currentUserRole = localStorage.getItem("userRole") || "user"; 
@@ -171,7 +173,6 @@ onAuthStateChanged(auth, async (user) => {
         if (emailElTop) emailElTop.innerText = `Chào, ${userData.username || user.email}`;
 
         currentUserRole = userRole; 
-        // Cập nhật lại Navbar sau khi lấy role thật
         renderNavbar(userRole);
 
         // 3. Hiển thị Role ở Left Box
@@ -182,48 +183,50 @@ onAuthStateChanged(auth, async (user) => {
 
         const nameEl = document.getElementById("displayHomeName");
         const msgEl = document.getElementById("no-home-msg");
-        const adminActionArea = document.getElementById("adminActionArea");
+        const adminUserContainer = document.getElementById("adminUserListContainer");
         const addMenu = document.getElementById("addMenu");
 
-        // 4. LUÔN LUÔN Cập nhật Menu nút "+" (Bất kể đã vào nhà hay chưa)
+        // 4. LUÔN LUÔN Cập nhật Menu nút "+"
         if (addMenu) {
             let menuContent = "";
             if (homeId) {
-                // Nếu đã vào một nhà, hiện thêm các chức năng quản lý
                 menuContent += `
                     <div onclick="openAddDevice()">Thêm thiết bị</div>
-                    <div onclick="openRoomManagement()">Quản lý cấu trúc nhà</div>
-                `;
+                    <div onclick="openRoomManagement()">Quản lý cấu trúc nhà</div>`;
             }
-            // Các chức năng HOME luôn hiện cho tất cả Role
             menuContent += `
                 <div onclick="openAddHome()" style="border-top: 1px solid #eee; color: #007bff; font-weight: bold;">+ Thêm nhà mới</div>
-                <div onclick="window.location.href='select-home.html'" style="color: #28a745; font-weight: bold;">➜ Đổi nhà / Vào nhà khác</div>
-            `;
+                <div onclick="window.location.href='select-home.html'" style="color: #28a745; font-weight: bold;">➜ Đổi nhà / Vào nhà khác</div>`;
             addMenu.innerHTML = menuContent;
         }
 
-        // 5. Hiển thị thông báo nếu chưa vào nhà
+        // --- KÍCH HOẠT GIẢ LẬP LỖI (CHỈ CHẠY 1 LẦN KHI ĐĂNG NHẬP) ---
+        const shouldSimulate = localStorage.getItem("triggerSimulation") === "true";
+        if (shouldSimulate && userRole === 'user') {
+            localStorage.removeItem("triggerSimulation");
+            console.log("%c[Simulation] Đăng nhập thành công - Tạo sự cố khẩn cấp ngay lập tức!", "color: orange; font-weight: bold;");
+            // Rút ngắn xuống 0ms để báo ngay lập tức theo yêu cầu
+            setTimeout(() => simulateRandomFailure(true), 0);
+        }
+
+        // 5. Xử lý hiển thị Nhà
         if (homeId) {
-            localStorage.setItem("activeHomeId", homeId);
             if (msgEl) msgEl.style.display = "none";
 
-            // Tải metadata (Chạy song song)
             getDoc(doc(db, "homes", homeId)).then(homeSnap => {
                 if (homeSnap.exists()) {
                     const hName = homeSnap.data().homeName;
                     if (nameEl) nameEl.innerText = hName;
                     localStorage.setItem("activeHomeName", hName);
                 } else {
-                    if (nameEl) nameEl.innerText = "Bạn chưa đăng nhập vào nhà hãy đăng nhập";
+                    if (nameEl) nameEl.innerText = "Bạn chưa đăng nhập vào nhà";
                 }
             });
 
-            // Gọi badge update
-            updateNotificationBadge(homeId, userRole);
+
             fetchHomeDetails(homeId);
 
-            // Tự động cập nhật thông tin thành viên hiện tại vào danh sách nhà (QUAN TRỌNG)
+            // Cập nhật member
             const memberRef = doc(db, "homes", homeId, "members", user.uid);
             setDoc(memberRef, {
                 uid: user.uid,
@@ -233,23 +236,13 @@ onAuthStateChanged(auth, async (user) => {
                 lastJoined: new Date().toISOString()
             }, { merge: true });
 
-            // Kiểm tra cờ giả lập hỏng hóc (Chỉ chạy khi vừa đăng nhập nhà)
-            const shouldSimulate = localStorage.getItem("triggerSimulation") === "true";
-            if (shouldSimulate) {
-                localStorage.removeItem("triggerSimulation"); // Xóa cờ ngay để không bị lặp khi F5
-                simulateRandomFailure(homeId);
-            }
-
-            // Hiển thị danh sách thành viên
-            const adminUserContainer = document.getElementById("adminUserListContainer");
             if (adminUserContainer) {
                 adminUserContainer.style.display = "block";
                 fetchUsersInHome(homeId);
             }
         } else {
-            if (msgEl) {
-                msgEl.style.display = "block";
-            }
+            if (msgEl) msgEl.style.display = "block";
+            if (adminUserContainer) adminUserContainer.style.display = "none";
         }
     }
 });
@@ -858,6 +851,21 @@ window.saveHome = async () => {
 
         // Bỏ qua trường ownedHomeId đơn lẻ, cứ lưu vào localStorage để vào nhà
         localStorage.setItem("activeHomeId", customHomeId);
+        
+        // CẬP NHẬT: Lưu ID nhà mới vào hồ sơ User để hệ thống nhận diện và lắng nghe thông báo
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            const userData = userSnap.data();
+            const updates = {
+                joinedHomeIds: arrayUnion(customHomeId)
+            };
+            // Nếu chưa có nhà sở hữu, đặt nhà này làm ownedHomeId
+            if (!userData.ownedHomeId) {
+                updates.ownedHomeId = customHomeId;
+            }
+            await updateDoc(userRef, updates);
+        }
 
         if (window.logNotification) {
             await window.logNotification(customHomeId, "thiết lập nhà mới", `Tạo nhà: ${name}`, "management");
@@ -1215,3 +1223,13 @@ window.verifyHomePassword = async () => {
     }
 
 };
+
+// --- TỰ ĐỘNG GIẢ LẬP ĐỊNH KỲ (30 giây quét một lần, xác suất hỏng 30%) ---
+setInterval(() => {
+    // Chỉ giả lập nếu là User và đã đăng nhập
+    if (typeof currentUserRole !== 'undefined' && currentUserRole === 'user') {
+        // Đã tăng lên 100% để test
+        console.log("%c[Simulation] Chu kỳ 30s: Đang tạo sự cố mới...", "color: #3498db;");
+        simulateRandomFailure();
+    }
+}, 30000); 
