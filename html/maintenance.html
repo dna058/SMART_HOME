@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sửa Chữa & Bảo Trì</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <style>
+        .maintenance-container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .maintenance-header {
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .maintenance-header h2 {
+            color: #d9534f;
+            font-size: 22px;
+            margin: 0;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .device-maintenance-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .device-maintenance-table th, .device-maintenance-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        .device-maintenance-table th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: bold;
+        }
+        .btn-repair {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-repair:hover {
+            background-color: #4cae4c;
+        }
+        .status-ok { color: #5cb85c; font-weight: bold; }
+        .status-error { color: #d9534f; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="logo">My Smart Home</div>
+    <div class="user">
+        <span id="userEmail"></span>
+        <button id="btnSignOut">Đăng xuất</button>
+    </div>
+</div>
+
+<!-- MENU -->
+<div class="menu">
+    <a href="dashboard.html" id="nav-home">Trang chủ</a>
+    <a href="management.html" id="nav-devices">Quản lý thiết bị</a>
+    <a href="notifications.html" id="nav-notifications">Thông báo</a>
+    <a href="profile.html" id="nav-role-action">Hồ sơ cá nhân</a>
+</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+    <div class="left">
+        <div class="home-info-container" style="display: flex; align-items: center; gap: 10px;">
+            <div class="home-selector" style="background: #f0f2f5; padding: 5px 15px; border-radius: 20px;">
+                <span id="displayHomeName" style="font-weight: bold;">Bạn chưa đăng nhập vào nhà</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CONTENT -->
+<div class="container" style="display: block;">
+    <div class="maintenance-container">
+        <div class="maintenance-header">
+            <h2>Hệ thống Sửa chữa & Bảo trì</h2>
+            <button class="btn btn-repair" onclick="alert('Đang quét toàn bộ hệ thống...')">Quét toàn hệ thống</button>
+        </div>
+        
+        <p>Danh sách các thiết bị trong nhà cần theo dõi lịch biểu bảo trì.</p>
+        
+        <div class="table-responsive">
+            <table class="device-maintenance-table">
+                <thead>
+                    <tr>
+                        <th>ID Thiết bị</th>
+                        <th>Tên thiết bị</th>
+                        <th>Vị trí</th>
+                        <th>Tình trạng (Mô phỏng)</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="maintenanceList">
+                    <tr><td colspan="5" style="text-align: center; color: gray;">Đang phân tích dữ liệu...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script type="module" src="../js/config.js"></script>
+<script type="module" src="../js/deviceManager.js"></script>
+<script type="module" src="../js/notifications.js"></script>
+<script type="module" src="../js/maintenance.js"></script>
+
+</body>
+</html>

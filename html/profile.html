@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hồ Sơ Cá Nhân</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/profile.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="logo">My Smart Home</div>
+    <div class="user">
+        <span id="userEmail"></span>
+        <button id="btnSignOut">Đăng xuất</button>
+    </div>
+</div>
+
+<div class="menu">
+    <a href="dashboard.html" id="nav-home">Trang chủ</a>
+    <a href="management.html" id="nav-devices">Quản lý thiết bị</a>
+    <a href="notifications.html" id="nav-notifications">Thông báo</a>
+    <a href="profile.html" id="nav-role-action">Hồ sơ cá nhân</a>
+</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+    <div class="left">
+        <div class="home-info-container" style="display: flex; align-items: center; gap: 10px;">
+            <div class="home-selector" style="background: #f0f2f5; padding: 5px 15px; border-radius: 20px;">
+                <span id="displayHomeName" style="font-weight: bold;">Bạn chưa đăng nhập vào nhà</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CONTENT -->
+<div class="container" style="display: block;">
+    <div class="profile-container">
+        <h2>Thông Tin Cá Nhân</h2>
+        
+        <form id="profileForm" class="profile-form">
+            <div class="form-group">
+                <label>Họ và Tên</label>
+                <input type="text" id="usernameInput" placeholder="Nhập họ tên...">
+            </div>
+            
+            <div class="form-group">
+                <label>Số điện thoại</label>
+                <input type="text" id="phoneInput" placeholder="SĐT liên hệ...">
+            </div>
+            
+            <button type="submit" id="btnUpdateProfile" class="btn btn-primary">Cập Nhật Thông Tin</button>
+        </form>
+
+        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">
+        
+        <h2>Đổi Mật Khẩu</h2>
+        <form id="passwordForm" class="profile-form">
+            <div class="form-group">
+                <label>Mật khẩu tài khoản mới</label>
+                <input type="password" id="newPassword" placeholder="Tối thiểu 8 ký tự...">
+            </div>
+            
+            <div class="form-group">
+                <label>Xác nhận mật khẩu tài khoản</label>
+                <input type="password" id="confirmNewPassword" placeholder="Nhập lại mật khẩu mới...">
+            </div>
+            
+            <button type="submit" id="btnUpdatePassword" class="btn btn-warning">Đổi Mật Khẩu Tài Khoản</button>
+        </form>
+
+        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">
+
+        <h2>Đổi Mật Khẩu Nhà</h2>
+        <form id="homePasswordForm" class="profile-form">
+            <div class="form-group">
+                <label>Mật khẩu nhà HIỆN TẠI (Bắt buộc)</label>
+                <input type="password" id="oldHomePassword" placeholder="Nhập mật khẩu nhà cũ...">
+            </div>
+            <div class="form-group">
+                <label>Mật khẩu nhà MỚI</label>
+                <input type="password" id="newHomePassword" placeholder="Nhập mật khẩu nhà mới...">
+            </div>
+            <button type="submit" id="btnUpdateHomePassword" class="btn btn-primary" style="background-color: var(--primary-color);">Cập Nhật Mật Khẩu Nhà</button>
+        </form>
+    </div>
+</div>
+<script type="module" src="../js/config.js"></script>
+<script type="module" src="../js/deviceManager.js"></script>
+<script type="module" src="../js/profile.js"></script>
+</body>
+</html>

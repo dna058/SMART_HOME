@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký</title>
+    <link rel="stylesheet" href="../css/authen.css">
+</head>
+
+<body>
+    <div class="wrapper">
+        <h1 class="title">Đăng ký tài khoản</h1>
+        <h2 class="MySmartHome">My Smart Home</h2>
+
+        <form onsubmit="return false;">
+            <div class="item">
+                <label for="username">Tên của bạn</label>
+                <input type="text" placeholder="Nhập tên" id="username" required autocomplete="off">
+            </div>
+
+            <div class="item">
+                <label for="email">Email</label>
+                <input type="email" placeholder="example@gmail.com" id="email" pattern=".*@gmail\.com"
+                    title="Gmail" required autocomplete="disabled-field">
+            </div>
+
+            <div class="item">
+                <label for="password">Mật khẩu (Tối thiểu 8 ký tự)</label>
+                <input type="password" placeholder="Mật khẩu" id="password" required minlength="8" autocomplete="new-password">
+            </div>
+
+            <div class="item">
+                <label for="confirmPassword">Xác nhận mật khẩu</label>
+                <input type="password" placeholder="Xác nhận mật khẩu" id="confirmPassword" required minlength="8" autocomplete="new-password">
+            </div>
+            <button type="button" onclick="handleRegister()" style="cursor: pointer;">Đăng ký</button>
+
+            <p class="navigation">Đã có tài khoản? <a href="login.html">Đăng nhập</a></p>
+        </form>
+    </div>
+    <script type="module" src="../js/config.js"></script>
+    <script type="module" src="../js/deviceManager.js"></script>
+    <script type="module" src="../js/register.js"></script>
+</body>
+
+</html>
+
+<!--Đăng ký : lấy thông tin -- Firebase authen -->

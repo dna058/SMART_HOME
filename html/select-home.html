@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vào nhà của bạn</title>
+    <link rel="stylesheet" href="../css/authen.css">
+</head>
+<body>
+    <div class="wrapper">
+        <h2>Vào nhà của bạn</h2>
+        
+        <div class="item">
+            <label>Mã nhà (Home ID)</label>
+            <input type="text" id="homeIdInput" placeholder="VD: HOME_123" autocomplete="new-password">
+        </div>
+
+        <div class="item">
+            <label>Mật khẩu nhà</label>
+            <input type="password" id="homePasswordInput" placeholder="Mật khẩu" autocomplete="new-password">
+        </div>
+
+        <button onclick="accessHome()">Vào nhà</button>
+        
+        <p class="navigation" style="margin-top: 20px;">
+            <a href="dashboard.html" style="color: #7f8c8d; font-size: 14px;">← Quay lại Dashboard</a>
+        </p>
+    </div>
+    <script type="module" src="../js/config.js"></script>
+    <script type="module" src="../js/deviceManager.js"></script>
+    <script type="module" src="../js/select-home.js"></script>
+</body>
+</html>

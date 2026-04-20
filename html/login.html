@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập</title>
+    <link rel="stylesheet" href="../css/authen.css">
+</head>
+<body>
+
+<div class="wrapper">
+    <h1 class="title">Đăng nhập</h1>
+    <h2 class="MySmartHome">My Smart Home</h2>
+
+    <form onsubmit="return false;">
+        <div class="item">
+            <label>Email</label>
+            <input type="email" placeholder="Nhập email của bạn" id="email" required autocomplete="user-email-field">
+        </div>
+
+        <div class="item">
+            <label>Mật khẩu</label>
+            <input type="password" placeholder="Mật khẩu" id="password" required autocomplete="new-password">
+        </div>
+
+        <button type="button" onclick="handleLogin()" style="cursor: pointer;">
+            Đăng nhập
+        </button>
+
+        <p class="navigation">
+            Chưa có tài khoản? <a href="register.html">Đăng ký</a>
+        </p>
+    </form>
+</div>
+<script type="module" src="../js/config.js"></script>
+<script type="module" src="../js/deviceManager.js"></script>
+<script type="module" src="../js/login.js"></script>
+
+
+</body>
+</html>

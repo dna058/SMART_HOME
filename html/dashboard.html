@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo">My Smart Home</div>
+
+        <div class="user">
+            <span id="userEmail"></span>
+            <button id="btnSignOut" onclick="handleSignOut()">Đăng xuất</button>
+        </div>
+    </div>
+
+    <div class="menu">
+        <a href="dashboard.html" id="nav-home">Trang chủ</a>
+        <a href="management.html" id="nav-devices">Quản lý thiết bị</a>
+        <a href="notifications.html" id="nav-notifications">Thông báo</a>
+        <a href="profile.html" id="nav-role-action">Hồ sơ cá nhân</a>
+    </div>
+
+    <div class="top-bar">
+        <div class="left">
+
+
+            <div class="home-info-container">
+                <div class="home-selector" style="background: #f0f2f5; padding: 5px 15px; border-radius: 20px;"
+                    onclick="window.location.href='select-home.html'">
+                    <span id="displayHomeName" style="font-weight: bold;">Bạn chưa đăng nhập vào nhà</span>
+                </div>
+                <div id="adminActionArea"></div>
+            </div>
+        </div>
+
+        <div class="right">
+            <div class="add-wrapper">
+                <button class="add-btn" onclick="toggleAddMenu()">+</button>
+                <div id="addMenu" class="add-menu">
+                    <div onclick="openAddDevice()">Thêm thiết bị</div>
+                    <div onclick="openRoomManagement()">Quản lý phòng</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HOME MANAGER -->
+    <div id="homeManager" class="modal">
+        <div class="modal-content">
+            <h3>Quản lý nhà</h3>
+            <div id="homeList"></div>
+            <button onclick="openAddHome()">+ Thêm nhà mới</button>
+            <button onclick="closeHomeManager()">Quay lại</button>
+        </div>
+    </div>
+
+    <div id="addHomeModal" class="modal">
+        <div class="modal-content">
+            <h3>Thêm nhà mới</h3>
+            <input type="text" id="homeName" placeholder="Tên nhà">
+            <input type="text" id="homeAddress" placeholder="Địa chỉ">
+
+            <input type="password" id="homePassword" placeholder="Mật khẩu nhà (Nếu cần)">
+
+            <div class="room-selection">
+                <p style="font-weight: 600; margin-bottom: 15px; color: var(--text-muted);">Chọn các phòng và số lượng phòng:</p>
+                <div class="room-item">
+                    <label><input type="checkbox" name="rooms" value="Phòng khách" onchange="toggleInput(this)"> Phòng khách</label>
+                    <input type="number" class="room-count" value="1" min="1" disabled>
+                </div>
+                <div class="room-item">
+                    <label><input type="checkbox" name="rooms" value="Nhà ăn" onchange="toggleInput(this)"> Nhà ăn</label>
+                    <input type="number" class="room-count" value="1" min="1" disabled>
+                </div>
+                <div class="room-item">
+                    <label><input type="checkbox" name="rooms" value="Phòng ngủ" onchange="toggleInput(this)"> Phòng ngủ</label>
+                    <input type="number" class="room-count" value="1" min="1" disabled>
+                </div>
+                <div class="room-item">
+                    <label><input type="checkbox" name="rooms" value="Phòng tắm" onchange="toggleInput(this)"> Phòng tắm</label>
+                    <input type="number" class="room-count" value="1" min="1" disabled>
+                </div>
+                <div class="room-item">
+                    <label><input type="checkbox" name="rooms" value="Vườn & Cửa" onchange="toggleInput(this)"> Vườn & Cửa</label>
+                    <input type="number" class="room-count" value="1" min="1" disabled>
+                </div>
+            </div>
+
+            <button onclick="saveHome()">Lưu</button>
+            <button onclick="toggleHomeManager()">Hủy</button>
+        </div>
+    </div>
+
+    <!-- ROOM MANAGEMENT MODAL -->
+    <div id="roomManagementModal" class="modal">
+        <div class="modal-content">
+            <h3>Quản lý cấu trúc nhà</h3>
+            <div id="roomListManaged" style="margin-bottom: 20px;">
+                <!-- Rooms will be listed here with Edit/Delete buttons -->
+            </div>
+            <div class="add-room-form" style="border-top: 1px solid #eee; padding-top: 15px;">
+                <input type="text" id="newRoomName" placeholder="Tên phòng mới">
+                <button onclick="addRoom()"
+                    style="background: #28a745; color: white; padding: 5px 15px; border-radius: 5px; border: none; cursor: pointer;">+
+                    Thêm phòng</button>
+            </div>
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+            <button onclick="closeRoomManagement()">Đóng</button>
+        </div>
+    </div>
+
+    <!-- EDIT ROOM MODAL -->
+    <div id="editRoomModal" class="modal">
+        <div class="modal-content">
+            <h3>Sửa tên phòng</h3>
+            <input type="hidden" id="oldRoomName">
+            <input type="text" id="editRoomNameInput" placeholder="Tên phòng mới">
+            <div style="margin-top: 15px;">
+                <button onclick="saveEditRoom()" style="background: #007bff; color: white;">Lưu thay đổi</button>
+                <button onclick="closeEditRoomModal()">Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="container">
+
+        <!-- LEFT BOX -->
+        <div class="left-box">
+            <h3>Thông tin</h3>
+            <p><b>Quyền:</b> Đang tải...</p>
+
+            <!-- Danh sách nhà dạng scroll -->
+            <div id="userHomesListContainer" style="margin-top: 16px;">
+                <hr style="border: 0; border-top: 1px solid #ddd; margin-bottom: 12px;">
+                <h3>Danh sách nhà</h3>
+                <div id="userHomesList"
+                    style="max-height: 220px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 6px; background: #fafafa; padding: 6px;">
+                    <p style="text-align:center; color:gray; font-size:12px; margin:8px 0;">Đang tải...</p>
+                </div>
+            </div>
+
+            <div id="adminUserListContainer" style="margin-top: 20px;">
+                <hr style="border: 0; border-top: 1px solid #ddd; margin-bottom: 15px;">
+                <h3>Thành viên trong nhà</h3>
+                <ul id="adminUserList"
+                    style="list-style: none; padding: 0; font-size: 14px; line-height: 2; margin-top: 10px;">
+                    <li>Đang tải...</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="right-box">
+            <div class="header-content">
+                <h2>Bảng điều khiển thiết bị</h2>
+                <p>Phân loại theo khu vực trong gia đình</p>
+            </div>
+
+            <div id="no-home-msg" style="color:#aaa; text-align:center; padding:40px 20px; font-size:14px;">
+                ← Chọn nhà từ danh sách bên trái để bắt đầu
+            </div>
+
+            <!-- Admin User List Container -->
+            <div id="adminUserListContainer"
+                style="display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="font-size: 16px; margin-bottom: 10px; color: #333;">Thành viên trong nhà:</h3>
+                <ul id="adminUserList" style="list-style: none; padding: 0;">
+                    <!-- Danh sách user nạp vào đây -->
+                </ul>
+            </div>
+
+            <div id="roomsContainer">
+                <!-- Các phòng (Phòng khách, Phòng ngủ...) nạp động vào đây -->
+            </div>
+        </div>
+        <div id="addDeviceModal" class="modal">
+            <div class="modal-content">
+                <h3>Thêm thiết bị mới</h3>
+                <input type="text" id="deviceNameInput" placeholder="Tên thiết bị (VD: Đèn trần)">
+
+                <label>Chọn phòng:</label>
+                <select id="deviceRoomSelect"></select>
+
+                <div style="margin-top: 20px;">
+                    <button onclick="saveDevice()">Lưu thiết bị</button>
+                    <button onclick="closeAddDevice()">Hủy</button>
+                </div>
+            </div>
+        </div>
+        <script type="module" src="../js/dashboard.js"></script>
+        <div id="deviceModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeDeviceModal()">&times;</span>
+                <h2>Thêm Thiết Bị Mới</h2>
+                <form id="addDeviceForm">
+                    <label>Tên thiết bị:</label>
+                    <input type="text" id="deviceName" placeholder="Ví dụ: Đèn trần, Quạt..." required>
+
+                    <label>Chọn phòng:</label>
+                    <select id="deviceRoom" required>
+                    </select>
+
+                    <button type="submit" class="save-btn">Lưu thiết bị</button>
+                </form>
+            </div>
+        </div>
+        <div id="editDeviceModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeEditModal()">&times;</span>
+                <h2>Sửa thiết bị</h2>
+                <form id="editDeviceForm">
+                    <input type="hidden" id="editDeviceId">
+                    <input type="hidden" id="editOldDeviceName">
+                    <input type="hidden" id="editOldDeviceLocation">
+                    <label>Tên thiết bị:</label>
+                    <input type="text" id="editDeviceName" required>
+
+                    <label>Phòng/Vị trí:</label>
+                    <select id="editDeviceRoom"></select>
+
+                    <button type="submit">Lưu thay đổi</button>
+                </form>
+            </div>
+        </div>
+
+
+        <!-- Modal nhập mật khẩu khi chọn nhà -->
+        <div id="homePasswordModal"
+            style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+            <div
+                style="background:#fff; padding:30px; border-radius:12px; width:320px; text-align:center; position:relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                <span onclick="closeHomePasswordModal()"
+                    style="position:absolute; top:12px; right:16px; font-size:20px; cursor:pointer; color:#999;">&times;</span>
+                <h3 style="margin-bottom:6px; color:#333;">Đăng nhập nhà</h3>
+                <p id="targetHomeName" style="font-weight:bold; color:#007bff; margin-bottom:16px; font-size:15px;"></p>
+                <input type="hidden" id="targetHomeId">
+                <input type="password" id="targetHomePassword" placeholder="Nhập mật khẩu nhà..."
+                    style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-size:14px;"
+                    onkeydown="if(event.key==='Enter') verifyHomePassword()">
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button onclick="verifyHomePassword()"
+                        style="background:#007bff; color:white; border:none; padding:9px 20px; border-radius:6px; cursor:pointer; font-size:14px;">Xác
+                        nhận</button>
+                    <button onclick="closeHomePasswordModal()"
+                        style="background:#e0e0e0; color:#333; border:none; padding:9px 20px; border-radius:6px; cursor:pointer; font-size:14px;">Hủy</button>
+                </div>
+            </div>
+        </div>
+        <script type="module" src="../js/config.js"></script>
+        <script type="module" src="../js/deviceManager.js"></script>
+        <script type="module" src="../js/notifications.js"></script>
+        <script type="module" src="../js/dashboard.js"></script>
+</body>
+
+</html>

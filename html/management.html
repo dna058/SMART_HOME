@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Thiết bị</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="logo">My Smart Home</div>
+    <div class="user">
+        <span id="userEmail"></span>
+        <button id="btnSignOut">Đăng xuất</button>
+    </div>
+</div>
+
+<!-- MENU -->
+<div class="menu">
+    <a href="dashboard.html" id="nav-home">Trang chủ</a>
+    <a href="management.html" id="nav-devices">Quản lý thiết bị</a>
+    <a href="notifications.html" id="nav-notifications">Thông báo</a>
+    
+    <a href="profile.html" id="nav-role-action">Hồ sơ cá nhân</a>
+</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+    <div class="left">
+        <div class="home-info-container" style="display: flex; align-items: center; gap: 10px;">
+            <div class="home-selector" style="background: #f0f2f5; padding: 5px 15px; border-radius: 20px;">
+                <span id="displayHomeName" style="font-weight: bold;">Bạn chưa đăng nhập vào nhà</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="display: block; padding: 20px;">
+    <div class="management-card" style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div class="noti-header" style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <h2>Danh sách thiết bị & Tình trạng</h2>
+            <p style="font-size: 14px; color: #666;">Nhấn vào tên thiết bị để xem lịch sử hoạt động chi tiết</p>
+        </div>
+
+        <div id="managementTableContainer">
+            <p style="text-align: center;">Đang kết nối dữ liệu thiết bị...</p>
+        </div>
+    </div>
+</div>
+
+<div id="historyModal" class="modal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="modalTitle">Lịch sử hoạt động</h3>
+            <span class="close" onclick="closeHistoryModal()" style="cursor:pointer; font-size: 24px;">&times;</span>
+        </div>
+        <div id="historyModalContent" class="log-list" style="margin-top: 15px; max-height: 300px; overflow-y: auto;">
+            </div>
+        <div style="text-align: right; margin-top: 15px;">
+            <button onclick="closeHistoryModal()" style="padding: 8px 15px; cursor: pointer;">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT DEVICE MODAL -->
+<div id="editDeviceModal" class="modal" style="display:none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: #333;">Sửa thiết bị</h2>
+            <span class="close" onclick="closeEditModal()" style="cursor:pointer; font-size: 24px; color: #aaa;">&times;</span>
+        </div>
+        <form id="editDeviceForm">
+            <input type="hidden" id="editDeviceId">
+            <input type="hidden" id="editOldDeviceName">
+            <input type="hidden" id="editOldDeviceLocation">
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Tên thiết bị:</label>
+                <input type="text" id="editDeviceName" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Phòng/Vị trí:</label>
+                <select id="editDeviceRoom" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;"></select>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; border-radius: 6px; border: 1px solid #ddd; background: #f8f9fa; cursor: pointer;">Hủy</button>
+                <button type="submit" style="padding: 10px 20px; border-radius: 6px; border: none; background: #007bff; color: white; cursor: pointer; font-weight: 600;">Lưu thay đổi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="module" src="../js/config.js"></script>
+<script type="module" src="../js/firebase-config.js"></script>
+<script type="module" src="../js/deviceManager.js"></script>
+<script type="module" src="../js/notifications.js"></script>
+<script type="module" src="../js/management.js"></script>
+
+</body>
+</html>

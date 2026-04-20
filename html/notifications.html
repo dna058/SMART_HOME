@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông Báo</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/notifications.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="logo">My Smart Home</div>
+    <div class="user">
+        <span id="userEmail"></span>
+        <button id="btnSignOut">Đăng xuất</button>
+    </div>
+</div>
+
+<!-- MENU -->
+<div class="menu">
+    <a href="dashboard.html" id="nav-home">Trang chủ</a>
+    <a href="management.html" id="nav-devices">Quản lý thiết bị</a>
+    <a href="notifications.html" id="nav-notifications">Thông báo</a>
+    <a href="profile.html" id="nav-role-action">Hồ sơ cá nhân</a>
+</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+    <div class="left">
+        <div class="home-info-container" style="display: flex; align-items: center; gap: 10px;">
+            <div class="home-selector" style="background: #f0f2f5; padding: 5px 15px; border-radius: 20px;">
+                <span id="displayHomeName" style="font-weight: bold;">Bạn chưa đăng nhập vào nhà</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CONTENT -->
+<div class="container" style="display: block;">
+    <div class="noti-container">
+        <div class="noti-header">
+            <h2>Lịch sử hoạt động & Thông báo</h2>
+        </div>
+        
+        <ul class="noti-list" id="notificationsList">
+            <li class="noti-empty">Đang tải thông báo...</li>
+        </ul>
+    </div>
+</div>
+<script type="module" src="../js/config.js"></script>
+<script type="module" src="../js/deviceManager.js"></script>
+<script type="module" src="../js/notifications.js"></script>
+</body>
+</html>
