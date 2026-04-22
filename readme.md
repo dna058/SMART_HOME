@@ -62,10 +62,12 @@ SMARTHOME_KOBE/
 ### 3. Tài khoản thử nghiệm
 Hệ thống đã được thiết lập sẵn hai vai trò để kiểm thử:
 
-| Vai trò | Email | Mật khẩu (Mặc định) |
+| Vai trò | Email | Mật khẩu |
 | :--- | :--- | :--- |
-| **USER** | `nhatanh@gmail.com` | *(Tài khoản đã tạo sẵn)* |
-| **ADMIN** | `dao@gmail.com` | *(Tài khoản đã tạo sẵn)* |
+| **USER** | `nhatanh@gmail.com` | `12345678` |
+| **ADMIN** | `dao@gmail.com` | `12345678` |
+
+> ⚠️ **Lưu ý quan trọng:** Dự án sử dụng **Firebase Authentication**. Để đăng nhập được, bạn **bắt buộc** phải mở file `login.html` qua một web server (ví dụ: **Live Server** trong VS Code, hoặc dùng lệnh `npx serve .`). **Không được** mở file trực tiếp bằng cách double-click (giao thức `file://` sẽ bị Firebase chặn).
 
 ---
 

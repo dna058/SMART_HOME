@@ -163,6 +163,11 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 async function renderNotificationsPage(userRole, userData, notiListEl) {
+    // Tập hợp các nhà admin đã từng đăng nhập vào (để lọc thông báo)
+    const adminJoinedHomes = new Set([
+        ...(userData.joinedHomeIds || []),
+        ...(userData.ownedHomeId ? [userData.ownedHomeId] : [])
+    ]);
     let notificationsMap = new Map();
     let deviceStatusMap = {};
     const activeHomeId = localStorage.getItem("activeHomeId");
@@ -196,6 +201,13 @@ async function renderNotificationsPage(userRole, userData, notiListEl) {
             
             // Lọc theo nhà đang active
             if (activeHomeId && data.homeId && data.homeId !== activeHomeId) return;
+
+            // Lọc theo quyền truy cập nhà:
+            // Nếu admin chưa đăng nhập vào nhà đó → chỉ hiện báo hỏng & sự cố tự động
+            if (userRole === 'admin' && data.homeId && !adminJoinedHomes.has(data.homeId)) {
+                const allowedCategories = ['danger', 'maintenance_request'];
+                if (!allowedCategories.includes(data.category)) return;
+            }
 
             const timeStr = new Date(data.timestamp).toLocaleString("vi-VN");
             let icon = '🔔', bg = '#3498db';
@@ -264,9 +276,21 @@ function startBadgeListener(userRole, userData) {
     const navNoti = document.getElementById("nav-notifications");
     if (!navNoti || window.location.pathname.includes("notifications.html")) return;
 
+    // Tập hợp nhà admin đã đăng nhập vào (dùng để lọc badge)
+    const adminJoinedHomes = new Set([
+        ...(userData.joinedHomeIds || []),
+        ...(userData.ownedHomeId ? [userData.ownedHomeId] : [])
+    ]);
+
     const checkNoti = (data) => {
         const lastView = new Date(localStorage.getItem("lastViewedNotifications") || 0).getTime();
         const notiTime = new Date(data.timestamp).getTime();
+
+        // Nếu admin chưa join nhà đó → chỉ hiện badge cho báo hỏng & sự cố tự động
+        if (userRole === 'admin' && data.homeId && !adminJoinedHomes.has(data.homeId)) {
+            const allowedCategories = ['danger', 'maintenance_request'];
+            if (!allowedCategories.includes(data.category)) return;
+        }
         
         if (notiTime > lastView) {
             // Chỉ cập nhật nếu giao diện chưa có dấu đỏ (Tránh lag do cập nhật DOM liên tục)

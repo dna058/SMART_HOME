@@ -43,8 +43,17 @@ async function handleLogin() {
         window.location.href = "dashboard.html";
 
     } catch (error) {
-        console.error(error);
-        alert("Sai tài khoản hoặc mật khẩu!");
+        console.error("Login error:", error.code, error.message);
+        
+        if (error.code === "auth/unauthorized-domain") {
+            alert("❌ Lỗi domain chưa được xác thực!\n\nVào Firebase Console → Authentication → Settings → Authorized domains → thêm '127.0.0.1' và 'localhost'.");
+        } else if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
+            alert("Sai tài khoản hoặc mật khẩu!");
+        } else if (error.code === "auth/network-request-failed") {
+            alert("❌ Lỗi mạng! Vui lòng kiểm tra kết nối internet.");
+        } else {
+            alert("❌ Lỗi đăng nhập: " + error.message);
+        }
     }
 }
 

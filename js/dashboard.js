@@ -150,7 +150,10 @@ function renderNavbar(role) {
 
 
 let homeDocUnsubscribe = null;
-let currentUserRole = localStorage.getItem("userRole") || "user"; 
+let currentUserRole = localStorage.getItem("userRole") || "user";
+// State lưu dữ liệu mới nhất để xử lý race condition giữa snapshot phòng và thiết bị
+let currentRooms = [];
+let currentDeviceSnapshots = null; // null = chưa có data
 
 // 2. Chạy ngay khi trang load (Sử dụng cache)
 const cachedRole = localStorage.getItem("userRole") || "user";
@@ -293,26 +296,47 @@ async function fetchHomeDetails(homeId) {
     const container = document.getElementById("roomsContainer");
     if (!container) return;
 
+    // Reset state khi chuyển sang nhà mới
+    currentRooms = [];
+    currentDeviceSnapshots = null;
+
     try {
         const homeRef = doc(db, "homes", homeId);
 
-        // Nghe realtime thay đổi cấu trúc nhà (phòng) và cập nhật UI ngay lập tức
+        // Listener 1: Nghe thay đổi cấu trúc phòng
         if (homeDocUnsubscribe) homeDocUnsubscribe();
         homeDocUnsubscribe = onSnapshot(homeRef, (homeSnap) => {
             if (!homeSnap.exists()) return;
             const homeData = homeSnap.data();
-            const rooms = homeData.rooms || [];
-            renderRooms(rooms);
+            currentRooms = homeData.rooms || [];
+
+            // Render phòng trước
+            renderRooms(currentRooms);
             renderManagedRoomList();
+
+            // Nếu đã có data thiết bị → render lại ngay (tránh mất thiết bị khi phòng refresh)
+            if (currentDeviceSnapshots !== null) {
+                clearDeviceLists();
+                currentDeviceSnapshots.forEach(({ id, data }) => renderDevice(id, data));
+            }
         });
 
-        // Cài listener realtime cho thiết bị trong nhà
+        // Listener 2: Nghe thay đổi thiết bị trong nhà
         const devicesRef = collection(db, "homes", homeId, "devices");
         onSnapshot(devicesRef, (snapshot) => {
-            clearDeviceLists();
+            // Lưu data thiết bị mới nhất vào state
+            currentDeviceSnapshots = [];
             snapshot.forEach((docSnap) => {
-                renderDevice(docSnap.id, docSnap.data());
+                currentDeviceSnapshots.push({ id: docSnap.id, data: docSnap.data() });
             });
+
+            if (currentRooms.length > 0) {
+                // Phòng đã sẵn sàng → render ngay
+                clearDeviceLists();
+                currentDeviceSnapshots.forEach(({ id, data }) => renderDevice(id, data));
+            }
+            // Nếu phòng chưa sẵn sàng: data đã được lưu trong currentDeviceSnapshots,
+            // homeRef snapshot sẽ render sau khi phòng được tải
         });
     } catch (e) {
         console.error("Lỗi tải thông tin nhà:", e);
@@ -447,7 +471,7 @@ function renderDevice(deviceId, device) {
     const listTable = document.getElementById(`list-${safeLocation}`);
 
     if (!listTable) {
-        console.warn(`Không tìm thấy bảng cho phòng: ${device.location}`);
+        console.warn(`[renderDevice] Phòng "${device.location}" không tìm thấy trong DOM (safeId: list-${safeLocation})`);
         return;
     }
 
